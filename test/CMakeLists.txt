@@ -1,42 +1,20 @@
+# find threads
+set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
-# Enable ExternalProject CMake module
-include(ExternalProject)
+# find gtest / gmock libraries
+find_package(PkgConfig)
+pkg_check_modules(LIBGTEST REQUIRED libgtest)
+pkg_check_modules(LIBGMOCK REQUIRED libgmock)
 
-# Download and install GoogleTest
-ExternalProject_Add(
-    gtest
-    URL https://github.com/google/googletest/archive/master.zip
-    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/gtest
-    # Disable install step
-    INSTALL_COMMAND ""
-)
+add_library(gtest SHARED IMPORTED)
+set_target_properties(gtest PROPERTIES IMPORTED_LOCATION ${LIBGTEST_LIBRARY_DIRS}/libgtest.a)
+add_library(gtest_main SHARED IMPORTED)
+set_target_properties(gtest_main PROPERTIES IMPORTED_LOCATION ${LIBGTEST_LIBRARY_DIRS}/libgtest_main.a)
 
-# Get GTest source and binary directories from CMake project
-ExternalProject_Get_Property(gtest source_dir binary_dir)
-
-# Create a libgtest target to be used as a dependency by test programs
-add_library(libgtest IMPORTED STATIC GLOBAL)
-add_dependencies(libgtest gtest)
-
-# Set libgtest properties
-set_target_properties(libgtest PROPERTIES
-    "IMPORTED_LOCATION" "${binary_dir}/googlemock/gtest/libgtest.a"
-    "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
-)
-
-# Create a libgmock target to be used as a dependency by test programs
-add_library(libgmock IMPORTED STATIC GLOBAL)
-add_dependencies(libgmock gtest)
-
-# Set libgmock properties
-set_target_properties(libgmock PROPERTIES
-    "IMPORTED_LOCATION" "${binary_dir}/googlemock/libgmock.a"
-    "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
-)
-
-# I couldn't make it work with INTERFACE_INCLUDE_DIRECTORIES
-include_directories("${source_dir}/googletest/include"
-                    "${source_dir}/googlemock/include")
+add_library(gmock SHARED IMPORTED)
+set_target_properties(gmock PROPERTIES IMPORTED_LOCATION ${LIBGMOCK_LIBRARY_DIRS}/libgmock.a)
+add_library(gmock_main SHARED IMPORTED)
+set_target_properties(gmock_main PROPERTIES IMPORTED_LOCATION ${LIBGMOCK_LIBRARY_DIRS}/libgmock_main.a)
 
 add_subdirectory(testfoo)
